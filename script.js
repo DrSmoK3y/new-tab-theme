@@ -2,19 +2,83 @@
   const root = window.TabOS;
   const { dom, state } = root.core;
 
+  function positionAutocomplete() {
+    const popup = dom.autocomplete;
+    if (!popup || !dom.cmdInput) return;
+
+    if (popup.parentElement !== document.body) {
+      document.body.appendChild(popup);
+    }
+
+    const inputLine = document.querySelector('.input-line');
+    const anchor = inputLine || dom.cmdInput;
+    const rect = anchor.getBoundingClientRect();
+    if (rect.width === 0 && rect.height === 0) return;
+
+    popup.style.position = 'fixed';
+    popup.style.zIndex = '99999';
+
+    const width = Math.max(340, Math.min(rect.width, window.innerWidth - 32));
+    let left = rect.left;
+    if (left + width > window.innerWidth - 16) {
+      left = window.innerWidth - width - 16;
+    }
+    if (left < 16) left = 16;
+
+    popup.style.left = `${Math.round(left)}px`;
+    popup.style.width = `${Math.round(width)}px`;
+
+    const spaceAbove = rect.top;
+    const spaceBelow = window.innerHeight - rect.bottom;
+
+    // Prefer opening directly under the terminal input line
+    if (spaceBelow >= 180 || spaceBelow >= spaceAbove) {
+      popup.style.top = `${Math.round(rect.bottom + 6)}px`;
+      popup.style.bottom = 'auto';
+      popup.style.maxHeight = `${Math.min(260, Math.max(120, spaceBelow - 20))}px`;
+    } else {
+      popup.style.bottom = `${Math.round(window.innerHeight - rect.top + 6)}px`;
+      popup.style.top = 'auto';
+      popup.style.maxHeight = `${Math.min(260, Math.max(120, spaceAbove - 20))}px`;
+    }
+  }
+
+  function selectItem(item) {
+    const key = item.dataset.key;
+    hideAutocomplete();
+
+    const insert = key.replace(/\s*(<[^>]+>|\[[^\]]+\]).*$/, '');
+    const withSlash = insert.startsWith('/') ? insert : `/${insert}`;
+    dom.cmdInput.value = `${withSlash}${withSlash.endsWith(' ') ? '' : ' '}`;
+    dom.cmdInput.focus();
+  }
+
   function showAutocomplete(items) {
     state.activeCompletion = 0;
-    dom.autocomplete.innerHTML = items.map(([key, value], i) =>
-      `<div class="ac-item ${i === 0 ? 'active' : ''}" data-key="${root.utils.escapeHtml(key)}">
-        <span>/${root.utils.escapeHtml(key)}</span><span class="ac-desc">${root.utils.escapeHtml(value.desc)}</span>
-      </div>`
-    ).join('');
+    dom.autocomplete.innerHTML = items.map(([key, value], i) => {
+      const badgeClass = value.type === 'folder' ? 'ac-folder' :
+        value.type === 'bookmark' ? 'ac-bm' :
+        value.type === 'custom' ? 'ac-custom' : 'ac-cmd';
+      const badgeText = value.type === 'folder' ? '📁 Folder' :
+        value.type === 'bookmark' ? '★ Link' :
+        value.type === 'custom' ? '⚡ Custom' : '⌘ Cmd';
+      const displayKey = key.startsWith('/') ? key : `/${key}`;
+
+      return `<div class="ac-item ${i === 0 ? 'active' : ''}" data-key="${root.utils.escapeHtml(key)}" data-type="${value.type || ''}" data-folder-id="${root.utils.escapeHtml(value.folderId || '')}" data-folder-title="${root.utils.escapeHtml(value.folderTitle || '')}">
+        <div class="ac-item-left">
+          <span class="ac-badge ${badgeClass}">${badgeText}</span>
+          <span class="ac-key">${root.utils.escapeHtml(displayKey)}</span>
+        </div>
+        <span class="ac-desc" title="${root.utils.escapeHtml(value.url || value.desc)}">${root.utils.escapeHtml(value.desc)}</span>
+      </div>`;
+    }).join('');
+
+    positionAutocomplete();
     dom.autocomplete.classList.add('show');
+
     dom.autocomplete.querySelectorAll('.ac-item').forEach(item => {
       item.addEventListener('click', () => {
-        dom.cmdInput.value = `/${item.dataset.key}`;
-        hideAutocomplete();
-        dom.cmdInput.focus();
+        selectItem(item);
       });
     });
   }
@@ -29,16 +93,18 @@
     if (!items.length) return;
     items[Math.max(state.activeCompletion, 0)].classList.remove('active');
     state.activeCompletion = (state.activeCompletion + dir + items.length) % items.length;
-    items[state.activeCompletion].classList.add('active');
+    const next = items[state.activeCompletion];
+    next.classList.add('active');
+    if (typeof next.scrollIntoView === 'function') {
+      next.scrollIntoView({ block: 'nearest' });
+    }
   }
 
   function acceptAutocomplete() {
     const items = dom.autocomplete.querySelectorAll('.ac-item');
     if (!items.length) return;
-    const key = items[Math.max(state.activeCompletion, 0)].dataset.key;
-    const insert = key.replace(/\s*(<[^>]+>|\[[^\]]+\]).*$/, '');
-    dom.cmdInput.value = `/${insert}${insert.endsWith(' ') ? '' : ' '}`;
-    hideAutocomplete();
+    const activeItem = items[Math.max(state.activeCompletion, 0)];
+    selectItem(activeItem);
   }
 
   function bindInput() {
@@ -74,14 +140,28 @@
 
     dom.cmdInput.addEventListener('input', () => {
       const value = dom.cmdInput.value;
-      if (value.startsWith('/') && value.length > 1) {
+      if (value.startsWith('/')) {
         const matches = root.commands.completions(value.slice(1));
+        if (matches.length) showAutocomplete(matches);
+        else hideAutocomplete();
+      } else if (value.trim().length > 0) {
+        const matches = root.commands.completions(value.trim());
         if (matches.length) showAutocomplete(matches);
         else hideAutocomplete();
       } else {
         hideAutocomplete();
       }
     });
+
+    window.addEventListener('resize', () => {
+      if (dom.autocomplete.classList.contains('show')) positionAutocomplete();
+    });
+    const termBody = document.getElementById('terminalBody');
+    if (termBody) {
+      termBody.addEventListener('scroll', () => {
+        if (dom.autocomplete.classList.contains('show')) positionAutocomplete();
+      });
+    }
 
     document.addEventListener('keydown', e => {
       const noteEditor = document.getElementById('noteEditor');
@@ -112,6 +192,15 @@
     const config = root.config.get();
     if (config.startupAnim !== false) {
       runStartupAnimation();
+    } else {
+      document.body.classList.add('no-anim');
+      const promptEl = document.querySelector('.prompt');
+      if (promptEl) {
+        promptEl.style.visibility = 'visible';
+        promptEl.classList.remove('prompt-typing');
+      }
+      root.core.appendOutput(`welcome back, ${root.utils.escapeHtml(config.user)}. type /h or ? for commands.`, 'success');
+      if (root.core.dom.cmdInput) root.core.dom.cmdInput.focus();
     }
   }
 

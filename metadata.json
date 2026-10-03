@@ -1,0 +1,8 @@
+{
+  "name": "TabOS Terminal New Tab",
+  "description": "A customizable terminal-themed dashboard with retro aesthetics, interactive commands, calendar, tasks, notes, rain effects, and arcade games.",
+  "permissions": [],
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

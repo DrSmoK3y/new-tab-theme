@@ -64,6 +64,11 @@
     if (promptUser) promptUser.textContent = config.user;
     if (promptHost) promptHost.textContent = config.host;
     if (titleEl) titleEl.textContent = `${config.user}@${config.host}`;
+    if (config.startupAnim === false) {
+      document.body.classList.add('no-anim');
+    } else {
+      document.body.classList.remove('no-anim');
+    }
     if (root.layout && root.layout.applyTheme) root.layout.applyTheme();
 
 
@@ -73,10 +78,16 @@
       const all = root.shortcuts.all();
       qlBar.innerHTML = Object.entries(all)
         .filter(([, val]) => /^https?:\/\//i.test(val.url))
-        .slice(0, 12)
+        .slice(0, 16)
         .map(([key, val]) =>
           `<a class="ql-link" href="${root.utils.escapeHtml(val.url)}" title="${root.utils.escapeHtml(val.desc)}">${root.utils.escapeHtml(key)}</a>`
-        ).join('');
+        ).join('') + `<button type="button" class="ql-link ql-add-btn" id="qlAddBtn" title="Manage shortcuts & bookmarks">+</button>`;
+      const qlAdd = document.getElementById('qlAddBtn');
+      if (qlAdd) {
+        qlAdd.onclick = () => {
+          if (root.shortcutsUI && root.shortcutsUI.open) root.shortcutsUI.open();
+        };
+      }
     }
   }
 
@@ -152,15 +163,18 @@
       else appendOutput(`unknown accent: ${escapeHtml(value)}`, 'error');
       return;
     }
-    if (sub === 'startup') {
+    if (sub === 'startup' || sub === 'anim' || sub === 'animation') {
       const val = words[2];
-      if (val === 'on' || val === 'off') {
-        config.startupAnim = val === 'on';
+      if (val === 'on' || val === 'off' || val === 'enable' || val === 'disable') {
+        const next = (val === 'on' || val === 'enable');
+        config.startupAnim = next;
         save();
-        appendOutput(`startup animation: ${val}`, 'success');
+        if (next) document.body.classList.remove('no-anim');
+        else document.body.classList.add('no-anim');
+        appendOutput(`command & startup animation: ${next ? 'on' : 'off (instant mode)'}`, 'success');
       } else {
-        appendOutput(`startup animation: ${config.startupAnim !== false ? 'on' : 'off'}`, 'info');
-        appendOutput('usage: /config startup on|off', 'info');
+        appendOutput(`command & startup animation: ${config.startupAnim !== false ? 'on' : 'off (instant mode)'}`, 'info');
+        appendOutput('usage: /config anim on|off (or /anim on|off)', 'info');
       }
       return;
     }

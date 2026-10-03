@@ -1,0 +1,16 @@
+{
+  "name": "tabos-terminal-new-tab",
+  "version": "1.0.0",
+  "description": "A customizable terminal-themed dashboard with retro aesthetics, interactive commands, calendar, tasks, notes, rain effects, and arcade games.",
+  "type": "module",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js",
+    "build": "echo 'Static app ready'"
+  },
+  "dependencies": {
+    "adm-zip": "^0.6.1",
+    "express": "^4.21.2",
+    "jszip": "^3.10.2"
+  }
+}

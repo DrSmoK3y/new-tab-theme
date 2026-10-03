@@ -7,12 +7,17 @@
   "chrome_url_overrides": {
     "newtab": "index.html"
   },
+  "permissions": [
+    "bookmarks"
+  ],
   "icons": {
+    "48": "icons/ter.png",
     "128": "icons/ter.png"
   },
   "action": {
     "default_title": "TabOS",
     "default_icon": {
+      "48": "icons/ter.png",
       "128": "icons/ter.png"
     }
   },

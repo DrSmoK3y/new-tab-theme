@@ -1,45 +1,28 @@
-<!DOCTYPE html>
+import express from 'express';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+import fs from 'fs';
+import JSZip from 'jszip';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+const HOST = '0.0.0.0';
+
+// Pristine original extension index.html
+const ORIGINAL_EXTENSION_INDEX_HTML = `<!DOCTYPE html>
 <html lang="en">
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TabOS Terminal New Tab</title>
-  <meta name="description" content="A customizable terminal-themed dashboard with retro aesthetics, interactive commands, calendar, tasks, notes, rain effects, and arcade games.">
-  <meta property="og:title" content="TabOS Terminal New Tab">
-  <meta property="og:description" content="A customizable terminal-themed dashboard with retro aesthetics, interactive commands, calendar, tasks, notes, rain effects, and arcade games.">
-  <link rel="icon" type="image/x-icon" href="/icons/ter.png">
+  <title>New Tab</title>
+  <link rel="icon" type="image/x-icon" href="icons/ter.png">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Press+Start+2P&display=swap"
     rel="stylesheet">
   <link rel="stylesheet" href="style.css">
-  <style>
-    .ext-dl-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      background: var(--bg3);
-      color: var(--accent);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 2px 8px;
-      font-size: 11px;
-      font-family: var(--font);
-      text-decoration: none;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      margin-left: 10px;
-    }
-    .ext-dl-btn:hover {
-      background: var(--accent);
-      color: var(--bg);
-      border-color: var(--accent);
-      text-decoration: none;
-    }
-    .dl-symbol {
-      font-size: 13px;
-      line-height: 1;
-    }
-  </style>
 </head>
 
 <body class="theme-terminal">
@@ -50,10 +33,7 @@
     <div class="top-left">
       <span class="distro-icon">▸</span>
       <span id="uptime" class="uptime"></span>
-      <a href="/api/download-extension" download="tabos-chrome-extension.zip" id="extDlBtn" class="ext-dl-btn" title="Download Chrome Extension (.zip)">
-        <span class="dl-symbol">⤓</span> Download Extension (.zip)
-      </a>
-      <button id="shortcutsBtn" class="ext-dl-btn shortcuts-btn" type="button" title="Manage shortcuts & Chrome bookmark folder">
+      <button id="shortcutsBtn" class="shortcuts-btn" type="button" title="Manage shortcuts & Chrome bookmark folder">
         <span class="dl-symbol">⚡</span> Shortcuts & Bookmarks
       </button>
     </div>
@@ -299,56 +279,105 @@
   <script src="commands.js"></script>
   <script src="shortcuts.js"></script>
   <script src="script.js"></script>
-  <script>
-    (function () {
-      window.downloadExtensionZip = async function () {
-        const btn = document.getElementById('extDlBtn');
-        const origHtml = btn ? btn.innerHTML : '';
-        if (btn) {
-          btn.innerHTML = '<span class="dl-symbol">⏳</span> Generating ZIP...';
-          btn.style.pointerEvents = 'none';
-        }
-
-        try {
-          const res = await fetch('/api/download-extension');
-          if (!res.ok) throw new Error('Download failed: ' + res.status);
-          const blob = await res.blob();
-          const blobUrl = window.URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = blobUrl;
-          link.download = 'tabos-chrome-extension.zip';
-          document.body.appendChild(link);
-          link.click();
-          setTimeout(() => {
-            document.body.removeChild(link);
-            window.URL.revokeObjectURL(blobUrl);
-          }, 3000);
-          if (btn) {
-            btn.innerHTML = '<span class="dl-symbol">✓</span> Download Started!';
-            setTimeout(() => {
-              btn.innerHTML = origHtml;
-              btn.style.pointerEvents = '';
-            }, 2500);
-          }
-        } catch (err) {
-          console.warn('Blob download failed, opening direct link:', err);
-          if (btn) {
-            btn.innerHTML = origHtml;
-            btn.style.pointerEvents = '';
-          }
-          window.location.href = '/api/download-extension';
-        }
-      };
-
-      const btn = document.getElementById('extDlBtn');
-      if (btn) {
-        btn.addEventListener('click', function (e) {
-          e.preventDefault();
-          window.downloadExtensionZip();
-        });
-      }
-    })();
-  </script>
 </body>
 
 </html>
+`;
+
+async function createExtensionZip() {
+  const zip = new JSZip();
+
+  // 1. manifest.json
+  const manifestPath = join(__dirname, 'manifest.json');
+  if (fs.existsSync(manifestPath)) {
+    zip.file('manifest.json', fs.readFileSync(manifestPath));
+  }
+
+  // 2. index.html (exact original version)
+  zip.file('index.html', ORIGINAL_EXTENSION_INDEX_HTML);
+
+  // 3. icons folder
+  const iconsPath = join(__dirname, 'icons');
+  if (fs.existsSync(iconsPath)) {
+    const files = fs.readdirSync(iconsPath);
+    for (const f of files) {
+      const filePath = join(iconsPath, f);
+      if (fs.statSync(filePath).isFile()) {
+        zip.file(`icons/${f}`, fs.readFileSync(filePath));
+      }
+    }
+  }
+
+  // 4. All extension source files
+  const rootFiles = [
+    'style.css',
+    'storage.js',
+    'core.js',
+    'config.js',
+    'layout.js',
+    'facts.js',
+    'rain.js',
+    'notes.js',
+    'todo.js',
+    'commands.js',
+    'shortcuts.js',
+    'script.js',
+    'game.js',
+    'README.md',
+  ];
+
+  for (const f of rootFiles) {
+    const filePath = join(__dirname, f);
+    if (fs.existsSync(filePath)) {
+      zip.file(f, fs.readFileSync(filePath));
+    }
+  }
+
+  // 5. Documentation folder
+  const docsPath = join(__dirname, 'docs');
+  if (fs.existsSync(docsPath)) {
+    const files = fs.readdirSync(docsPath);
+    for (const f of files) {
+      const filePath = join(docsPath, f);
+      if (fs.statSync(filePath).isFile()) {
+        zip.file(`docs/${f}`, fs.readFileSync(filePath));
+      }
+    }
+  }
+
+  return await zip.generateAsync({
+    type: 'nodebuffer',
+    compression: 'DEFLATE',
+    compressionOptions: { level: 6 },
+    platform: 'UNIX',
+  });
+}
+
+// Endpoint to download the original Chrome Extension as a ZIP file
+app.get('/api/download-extension', async (req, res) => {
+  try {
+    const zipBuffer = await createExtensionZip();
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', 'attachment; filename="tabos-chrome-extension.zip"');
+    res.setHeader('Content-Length', zipBuffer.length);
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.end(zipBuffer);
+  } catch (error) {
+    console.error('Failed to create extension zip:', error);
+    res.status(500).send('Failed to package extension');
+  }
+});
+
+// Serve static assets from the root directory
+app.use(express.static(__dirname));
+
+// Fallback to index.html for any unhandled GET routes
+app.get('*', (req, res) => {
+  res.sendFile(join(__dirname, 'index.html'));
+});
+
+app.listen(PORT, HOST, () => {
+  console.log(`TabOS server running at http://${HOST}:${PORT}`);
+});

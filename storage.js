@@ -3,7 +3,7 @@
 
   const DEFAULT_CONFIG = {
     user: 'user',
-    host: 'tabos',
+    host: 'Amon',
     distro: 'tabos',
     accent: '#39c5bb',
     layoutTheme: 'terminal',
@@ -41,6 +41,9 @@
     blurState: 'blurState',
     widgetLayout: 'widgetLayout',
     widgetVisibility: 'widgetVisibility',
+    bookmarkFolder: 'bookmarkFolder',
+    bookmarkFolderTitle: 'bookmarkFolderTitle',
+    bookmarkShortcuts: 'bookmarkShortcuts',
   };
 
   function safeJson(key, fallback) {
@@ -83,6 +86,13 @@
           next[key] = stored[key];
         }
       });
+      if (!next.user || next.user === 'Amon') {
+        next.user = 'user';
+      }
+      if (!next.host || next.host === 'tabos') {
+        next.host = 'Amon';
+      }
+      setJson(keys.config, { ...stored, user: next.user, host: next.host });
       if (typeof next.user === 'string') next.user = next.user.slice(0, 50);
       if (typeof next.host === 'string') next.host = next.host.slice(0, 50);
       if (typeof next.distro === 'string') next.distro = next.distro.slice(0, 50);

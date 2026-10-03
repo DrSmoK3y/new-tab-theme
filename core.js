@@ -265,9 +265,11 @@
       return;
     }
     appendOutput(escapeHtml(message), 'success');
+    const isInstant = document.body.classList.contains('no-anim') || (root.config && root.config.get && root.config.get().startupAnim === false);
+    const delay = isInstant ? 10 : 160;
     setTimeout(() => {
       window.location.assign(url);
-    }, 160);
+    }, delay);
   }
 
   let clockInterval = null;
