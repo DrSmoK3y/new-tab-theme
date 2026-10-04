@@ -1,167 +1,166 @@
 # TabOS
 
-A local-first, terminal-style new tab page for Chrome. Everything (notes, tasks, shortcuts, config) lives in `localStorage` — no accounts, no network calls, no telemetry. Type a command, get a result.
+A local-first, terminal-style new tab page for Chrome. Everything (notes, tasks, shortcuts, bookmark sync, config) lives in `localStorage` — no accounts, no network tracking, no telemetry. Type a command, get an instant result.
 
-## v4.0.0
+## Features & Highlights
 
-This release is a decluttering pass. The old Windows 7 / Aero theme (`win7.css`, `win7.js`, and the empty `themes/aero.css`, `themes/glass.css`, `themes/neo.css` stubs) has been removed entirely — about 2,200 lines gone. TabOS now ships two themes instead of three, is lighter to load, and has a hardened `content_security_policy` in `manifest.json`. No feature commands changed; this is purely cleanup and hardening on top of v3.
+- **Local & Private:** Zero external tracking, zero analytics, local-first storage.
+- **Terminal & Neo Themes:** Classic hacker green/cyan prompt (`user@Amon:~$`) or minimal movable dashboard (`neo`).
+- **Instant Boot / Animation Control (`/anim`):** Disable boot animation and transition delays for instant 0-second loading when in a hurry.
+- **Quick Search Routing:** Instant search queries for Google (`/s`), Bing (`/b`), DuckDuckGo (`/d`), YouTube (`/yt`), GitHub (`/gh`), Stack Overflow (`/so`), NPM (`/npm`), MDN (`/mdn`), Wikipedia (`/w`), Maps (`/maps`), and Amazon (`/amz`).
+- **Developer Toolbox:** Built-in utilities for IP lookup (`/ip`), UUID v4 generation (`/uuid`), Base64 encoding/decoding (`/b64`), SHA-256 hashing (`/hash`), JSON validation & formatting (`/json`), URL encoding (`/url`), color conversion (`/color`), math evaluation (`/calc`), Unix timestamps (`/ts`), and Lorem Ipsum generation (`/lorem`).
+- **Visual Shortcuts & Chrome Bookmark Sync:** Full GUI manager (`/shortcut`), quick bookmark folder syncing, and command line protection ensuring your active bookmark folder is never accidentally changed from the terminal.
+- **Productivity Suite:** Sticky notes with Markdown, recurrence-enabled todo list, 25-minute Pomodoro focus timer, typewriter facts, and procedural Web Audio rain ambience.
+- **Offline Arcade Games:** Chicken Defender, Snake, Pacman, and Tetris (lazy-loaded on demand).
 
 ## Install
 
-1. Clone or download this repo
-2. Go to `chrome://extensions`
-3. Enable **Developer mode**
-4. Click **Load unpacked** and select this folder
-5. Open a new tab
+1. Download or clone this repository (or use `/download` to get the Chrome extension `.zip`)
+2. Open Chrome and navigate to `chrome://extensions`
+3. Enable **Developer mode** (top-right toggle)
+4. Click **Load unpacked** and select the project directory
+5. Open a new tab (`Ctrl + T` / `Cmd + T`)
 
-## Themes
+## Themes & Layout
 
-| Command                  | Theme                                          |
-| ------------------------ | ----------------------------------------------- |
-| `/config theme terminal` | Dark terminal layout (default, fixed positions) |
-| `/config theme neo`      | Pastel minimal layout, widgets are movable       |
+| Command | Description |
+| :--- | :--- |
+| `/config theme terminal` | Dark terminal layout with fixed positions (default) |
+| `/config theme neo` | Pastel minimal dashboard layout with draggable, resizable widgets |
 
-`neo` supports a free-form dashboard layout:
-
-```text
-/layout edit on      # unlock dragging/resizing widgets (neo only)
-/layout edit off      # lock it back down
-/layout reset          # clear saved positions for the current theme
+### Neo Layout Customization
+```bash
+/layout edit on      # Unlock widget dragging and resizing (neo theme only)
+/layout edit off     # Lock widgets in place
+/layout reset        # Reset widget positions to defaults for active theme
 ```
 
-Drag a widget by its header, resize from the bottom-right grip. Positions are saved per-theme, so switching back to `terminal` doesn't disturb your `neo` layout.
+## Commands & Quick Reference
 
-## Commands
+Commands work with or without the leading `/`. Detailed manual available anytime via `/h` or `/help`.
 
-Commands work with or without the leading `/`. Plain arithmetic (`2+2*3`, `(4-1)**2`) is also evaluated directly if it isn't a recognized command.
+### 🌐 Quick Search & Web Routing
+| Command | Action |
+| :--- | :--- |
+| `/s <query>` | Google search (or jump to Google if no query) |
+| `/b <query>` | Bing search (or jump to Bing if no query) |
+| `/d <query>` | DuckDuckGo search (or jump to DuckDuckGo if no query) |
+| `/yt <query>` | Search YouTube |
+| `/gh <query>` | Search GitHub |
+| `/so <query>` | Search Stack Overflow |
+| `/npm <query>` | Search NPM packages |
+| `/mdn <query>` | Search MDN Web Docs |
+| `/w <query>` | Search Wikipedia |
+| `/maps <query>` | Search Google Maps |
+| `/amz <query>` | Search Amazon |
+| `/gpt <prompt>` | Open ChatGPT with prompt |
+| `/claude <prompt>` | Open Claude AI with prompt |
+| `/rd <sub\|query>` | Open subreddit (`/rd r/webdev`) or search Reddit |
 
-### General
-| Command             | What it does                        |
-| -------------------- | ------------------------------------ |
-| `/help [topic]`      | Show commands (`/help todo`, `/help rain`, `/help config`) |
-| `/clear`              | Clear the terminal output            |
-| `/time`               | Current time                         |
-| `/history`            | Last 20 commands                     |
+### 🛠️ Developer Tools & Utilities
+| Command | Action |
+| :--- | :--- |
+| `/ip` | Fetch and display public IP address (auto-copied) |
+| `/uuid` | Generate cryptographic RFC4122 UUID v4 (auto-copied) |
+| `/b64 enc <text>` | Encode string to Base64 (auto-copied) |
+| `/b64 dec <string>` | Decode Base64 string to plaintext (auto-copied) |
+| `/hash <text>` | Generate SHA-256 cryptographic hash (auto-copied) |
+| `/json <string>` | Prettify, format, and validate JSON syntax |
+| `/url enc <text>` | URL encode string (auto-copied) |
+| `/url dec <text>` | URL decode string (auto-copied) |
+| `/color <#hex\|rgb>` | Convert colors between HEX, RGB, HSL with visual preview swatch |
+| `/calc <expr>` | Advanced math evaluator (`sqrt(144) + 10^2`, `sin(pi/2)`, `2^8 - 50`) |
+| `/ts [timestamp]` | Current Unix timestamp in seconds/ms, or convert given epoch to Local/UTC/ISO |
+| `/lorem [count]` | Generate developer placeholder dummy text (auto-copied) |
 
-### Search & launch
-| Command             | What it does                  |
-| -------------------- | ------------------------------ |
-| `g: <query>` / `/g <query>` | Google search           |
-| `/gpt <prompt>`       | Open ChatGPT with prompt      |
-| `/claude <prompt>`    | Open Claude with prompt       |
-| `/yt <query>`         | YouTube search                |
-| `/rd <subreddit>`     | Open a subreddit              |
+### ⚡ System & Terminal
+| Command | Action |
+| :--- | :--- |
+| `/h [topic]` / `/help` | Comprehensive manual (`/h dev`, `/h search`, `/h sys`, `/h todo`) |
+| `/st [reload]` | Reset to clean startup page (or reload via `/st reload`) |
+| `/anim on\|off` | Toggle boot & command animation (instant mode when `off`) |
+| `/config` | View configuration summary |
+| `/config theme <name>` | Switch theme (`terminal`, `neo`) |
+| `/config accent <color>` | Change accent color (preset name or `#hex`) |
+| `/config user <name>` | Change prompt username (default: `user`) |
+| `/config host <name>` | Change prompt hostname (default: `Amon`) |
+| `/config anim on\|off` | Toggle command & startup animation |
+| `/clear` | Clear terminal output buffer |
+| `/time` | Current system time |
+| `/history` | View recent command history |
+| `/blur [all\|off]` | Privacy screen blur (hold `Alt` to peek through blur) |
+| `/export` | Export all data (notes, tasks, shortcuts, settings) to clipboard |
+| `/download` | Download TabOS as a packaged Chrome Extension `.zip` |
+| `/reset` | Factory reset all stored data (requires Y/N confirmation) |
 
-### Config
-| Command                      | What it does                     |
-| ----------------------------- | --------------------------------- |
-| `/config`                     | Show current config summary       |
-| `/config theme <terminal\|neo>` | Switch layout theme             |
-| `/config accent <preset\|#hex>` | Change accent color             |
-| `/config user\|host\|distro <value>` | Change terminal identity   |
-| `/config startup on\|off`     | Toggle the boot animation         |
-| `/config enable\|disable <widget>` | Show/hide a widget           |
-| `/config storage`             | List all localStorage keys used   |
-| `/config reset`               | Reset config to defaults          |
+### 📁 Shortcuts & Bookmarks
+| Command | Action |
+| :--- | :--- |
+| `/shortcut` | Open the visual Shortcuts & Bookmarks Manager modal |
+| `/shortcut list` | List all active links and shortcuts in terminal |
+| `/shortcut add <key> <url> [desc]` | Add a custom shortcut |
+| `/shortcut delete <key>` | Delete a custom shortcut or disable a built-in |
+| `/shortcut restore <key>` | Restore a disabled built-in shortcut |
+| `/shortcut sync` | Re-sync bookmarks from active folder |
+| `/folder` | View active bookmark folder info (read-only; protected against accidental terminal switches) |
 
-Accent presets: `cyan, red, green, blue, magenta, yellow, orange, pink, purple, white` — or any hex color.
-
-### Widgets
-| Command                    | What it does           |
-| --------------------------- | ------------------------ |
-| `/widget list`              | List widgets and visibility |
-| `/widget show\|hide\|toggle <name>` | Show/hide a widget |
-| `/widget reset`             | Reset visibility for all widgets |
-
-Widgets: `calendar, todo, pomodoro, notes, facts, clock` (terminal itself can't be hidden).
-
-### Notes
-- Click `+` in the notes panel, or type `/cat your note text here`
-- `/cat` with no text opens a blank note editor
-- Markdown supported: `**bold**`, `*italic*`, `` `code` ``, headings, blockquotes, tables, checklists (`- [ ]` / `- [x]`), links, code fences
-- In the editor: `Ctrl+B` bold, `Ctrl+I` italic, `Ctrl+K` link, `` Ctrl+` `` inline code, plus a live preview toggle
-
-### Todos
-```text
-/todo add finish cleanup ! due:27-06-2026 recur:weekly 50%
+### 📋 Tasks (Todo) & Productivity
+```bash
+/todo add finish deployment ! due:28-10-2026 recur:weekly 40%
 ```
-| Token                | Meaning                          |
-| --------------------- | --------------------------------- |
-| `!`                   | High priority                     |
-| `due:DD-MM-YYYY`      | Also accepts `due:today` / `due:tomorrow` |
-| `recur:daily\|weekly\|monthly` | Recurs on completion    |
-| `NN%`                 | Initial progress                  |
+- `!` : High priority flag
+- `due:DD-MM-YYYY` : Due date (also accepts `due:today`, `due:tomorrow`); shows clickable markers on the calendar widget
+- `recur:daily|weekly|monthly` : Automatically recreates task upon completion
+- `NN%` : Initial progress percentage
+- Subcommands: `/todo list`, `/todo done <id>`, `/todo delete <id>`, `/todo move <from> <to>`, `/todo clear-done`
+- `/pomodoro start [minutes]`, `/pomodoro pause`, `/pomodoro stop`, `/pomodoro status`
 
-Other subcommands: `/todo list`, `/todo done <id>`, `/todo delete <id>`, `/todo move <from> <to>`, `/todo due <id> <date|clear>`, `/todo recur <id> <mode>`, `/todo progress <id> <0-100>`, `/todo clear-done`. Tasks are also drag-reorderable in the panel, filterable by `all/high/low`, and due dates show up as clickable markers on the calendar widget.
+### 📝 Sticky Notes
+- Open note editor with `/cat` or click `+` on the notes panel
+- Type `/cat your note content` to create a note directly from the terminal
+- Full Markdown support: `**bold**`, `*italic*`, `` `code` ``, checklists (`- [ ]`), blockquotes, tables, links, code blocks
+- Keyboard shortcuts: `Ctrl+B` bold, `Ctrl+I` italic, `Ctrl+K` link, `` Ctrl+` `` inline code
 
-### Pomodoro
-`/pomodoro start [minutes]`, `/pomodoro pause`, `/pomodoro stop`, `/pomodoro status`. Runs off wall-clock time (survives tab suspension) and fires a browser notification on completion if permitted.
+### 🌧️ Rain Ambience
+- `/rain on|off|toggle` — Toggle rain canvas
+- `/rain preset mist|calm|storm` — Ambient presets
+- `/rain intensity <0-100>` — Drop density
+- `/rain sound on|off` — Procedural Web Audio synthesizer (no external audio files required)
+- `/rain thunder on|off` — Procedural lightning flashes and thunder claps
 
-### Rain
-| Command                              | What it does                  |
-| -------------------------------------- | ------------------------------- |
-| `/rain on\|off\|toggle`                | Toggle the rain canvas         |
-| `/rain intensity <0-100>`              | Drop density                   |
-| `/rain wind <direction\|degrees> <speed>` | Wind angle (`left/right/up/down/n/s/e/w/etc.` or degrees) and speed |
-| `/rain sound on\|off`                  | Ambient rain + thunder audio (Web Audio, procedural — no audio files) |
-| `/rain thunder on\|off`                | Occasional lightning + thunder at higher intensity |
-| `/rain preset mist\|calm\|storm`       | Quick presets                  |
+### 🎮 Arcade Games
+Type `/game <name> [difficulty]` to launch in the terminal (lazy-loaded on demand):
+- `chicken` — Chicken Defender (space shooter with 3 waves + boss)
+- `snake` — Classic Snake game
+- `pacman` — Retro Pacman with ghosts and pellets
+- `tetris` — Full Tetris with line clears and scoring
+- Press `ESC` at any time to return to the terminal. High scores are saved locally.
 
-### Facts
-`/fact` shows the next fact and cycles typewriter-style. `/fact mode science|tech|weird|context|mixed` changes the pool; `context` mode adapts the message to the time of day. `/fact cache` shows how many facts are loaded.
+## Architecture & Codebase
 
-### Games
-`/game <name> [difficulty]` lazy-loads `game.js` on first use so it never slows down the initial new-tab paint.
+TabOS is built with vanilla modern TypeScript/JavaScript without heavyweight frameworks, ensuring lightning-fast load times.
 
-| Game       | Controls                                      | Notes                        |
-| ----------- | ---------------------------------------------- | ------------------------------ |
-| `chicken`   | WASD / arrows move, SPACE / right-click shoot | 3 waves + boss, difficulty `easy\|medium\|hard` |
-| `snake`     | Arrows / WASD to turn                          | Classic, avoid walls and self |
-| `pacman`    | Arrows / WASD to move                          | Pellets, power pills, ghosts, tunnels |
-| `tetris`    | Arrows move, UP rotate, SPACE drop            | Clear lines before the stack tops out |
+| File | Purpose |
+| :--- | :--- |
+| `manifest.json` | Chrome MV3 extension manifest, newtab override, CSP |
+| `index.html` | Semantic DOM structure and widget layouts |
+| `storage.js` | LocalStorage schema, migration, validation, and defaults |
+| `core.js` | Output rendering, calendar, clock, uptime, safe arithmetic, URL routing |
+| `config.js` | User identity (`user@Amon`), accent colors, themes, animation states |
+| `commands.js` | Command router, developer utilities, search routes, rich `/h` manual, autocomplete |
+| `shortcuts.js` | Visual Shortcuts & Chrome Bookmarks integration modal, folder syncing |
+| `layout.js` | Drag-and-drop & resize engine for `neo` theme widgets |
+| `todo.js` | Task management, recurrence engine, Pomodoro timer |
+| `notes.js` | Sticky notes manager, live Markdown renderer, sanitizer |
+| `rain.js` | Canvas rain/lightning particle system & Web Audio sound generator |
+| `facts.js` | Adaptable typewriter facts bar |
+| `game.js` | Lazy-loaded arcade game engine |
+| `script.js` | Application bootstrapper, instant mode loader, input & autocomplete UI |
+| `style.css` | Complete stylesheet, themes, animations, and instant-mode overrides |
 
-`ESC` quits any game back to the terminal. High scores are kept in a local leaderboard.
+## Security & Privacy
 
-### Shortcuts
-Built-ins ship for `yt, gpt, claude, gemini, github/gh, gitam, mail/gmail, duolingo, leetcode, reddit, twitter/x, drive, maps, notion` — type the name (with or without `/`) to jump straight there.
-
-```text
-/shortcut list
-/shortcut add <name> <url> [description]
-/shortcut delete <name>          # removes custom, or disables a built-in
-/shortcut restore <name>         # re-enables a disabled built-in
-```
-
-### Privacy
-`/blur` toggles a blur over notes/todo/terminal output/facts for screen-share safety. `/blur notes|todo|terminal|facts on|off` targets one panel. Hold `Alt` to peek through the blur without turning it off.
-
-### Data
-Everything lives in `localStorage`; nothing leaves the browser. `/export` asks for a Y/N confirmation, then copies notes, todos, shortcuts, and config to your clipboard as JSON. `/reset` (also Y/N-gated) wipes every TabOS key and reloads.
-
-### Easter eggs
-`sudo`, `exit`, `hello`/`hi`, `coffee`, `42`, `hack`, `matrix`, `fortune`, `xkcd`, and `rm -rf /` all do small terminal-flavored things. Try them.
-
-## Architecture
-
-Vanilla JS, no build step, no bundler — Chrome loads the files directly.
-
-| File          | Responsibility                                          |
-| -------------- | --------------------------------------------------------- |
-| `manifest.json` | MV3 manifest, new-tab override, CSP                      |
-| `index.html`   | DOM shell for every widget                                |
-| `storage.js`   | localStorage read/write helpers, key registry, defaults   |
-| `core.js`      | DOM cache, clock/uptime/calendar, output rendering, tiny math expression parser |
-| `config.js`    | Identity, accent, theme switching                          |
-| `layout.js`    | Draggable/resizable widget positions (neo theme)           |
-| `commands.js`  | Command router, shortcuts, autocomplete catalog, easter eggs |
-| `notes.js`     | Sticky notes + markdown renderer/sanitizer                 |
-| `todo.js`      | Tasks, recurrence, drag reorder, pomodoro timer             |
-| `rain.js`      | Canvas rain/lightning renderer + Web Audio ambience         |
-| `facts.js`     | Fact bar with typewriter effect                             |
-| `game.js`      | Lazy-loaded: Chicken Defender, Snake, Pacman, Tetris        |
-| `script.js`    | Input handling, autocomplete UI, boot sequence               |
-| `style.css`    | All theming, terminal and neo layouts                       |
-
-## Security notes
-
-Notes/todo rendering escapes HTML before formatting and only allows `http(s)` links; `manifest.json` sets a strict `script-src 'self'` CSP. If you're auditing a fork, `notes.js`'s `renderMarkdown`/`sanitizeLinkHref` and `commands.js`'s shortcut URL checks are the two places user-controlled strings turn into DOM/URLs.
+- All user-generated strings, note Markdown, and terminal outputs are strictly sanitized and escaped before DOM insertion.
+- URL schemes are restricted strictly to `http://` and `https://` to prevent `javascript:` injection.
+- Chrome extension manifest defines a strict `Content-Security-Policy` (`script-src 'self'`).
+- Zero remote servers, zero external cookies, zero analytics.
